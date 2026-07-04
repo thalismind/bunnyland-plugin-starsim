@@ -6,6 +6,7 @@ from bunnyland.plugins import apply_plugins, load_modules
 from bunnyland_starsim import (
     ConstellationLogComponent,
     SkyComponent,
+    StarsimWorldgenHook,
     TelescopeComponent,
     WishLogComponent,
     constellation_fragments,
@@ -39,14 +40,14 @@ def test_plugin_declares_its_fragments():
         assert fragment in plugin.content.prompt_fragments
 
 
-def test_plugin_declares_no_worldgen_hook():
+def test_plugin_declares_worldgen_hook():
     plugin = load_modules(["bunnyland_starsim"])[0]
-    assert plugin.content.worldgen_hooks == ()
+    assert StarsimWorldgenHook in plugin.content.worldgen_hooks
 
 
 def test_plugin_version():
     plugin = load_modules(["bunnyland_starsim"])[0]
-    assert plugin.version == "0.1.0"
+    assert plugin.version == "0.2.0"
 
 
 def test_plugin_applies_and_registers_verbs():
