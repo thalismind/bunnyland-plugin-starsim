@@ -1,0 +1,33 @@
+[project]
+name = "bunnyland-starsim"
+version = "0.1.0"
+description = "Out-of-tree Bunnyland plugin: a stargazing and astronomy pack — a night sky that turns with the calendar, constellations to learn, celestial events to wish on, and navigation by the stars."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "bunnyland",
+    "pydantic>=2.0",
+    "relics",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bunnyland_starsim"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
