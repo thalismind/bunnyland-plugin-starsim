@@ -19,6 +19,7 @@ from bunnyland.core import (
 from relics import Entity, World
 
 from .components import TelescopeComponent
+from .telescopes import TELESCOPE_TIERS
 
 
 def _link_into_room(world: World, item: Entity, room_id) -> None:
@@ -42,4 +43,14 @@ def spawn_telescope(world: World, *, room_id=None, power: float = 1.0) -> Entity
     return item
 
 
-__all__ = ["spawn_telescope"]
+def spawn_tiered_telescope(world: World, tier_name: str, *, room_id=None) -> Entity:
+    """Spawn a telescope of a named tier (see :data:`TELESCOPE_TIERS`).
+
+    Raises ``KeyError`` for an unknown tier name. The tier's ``min_power`` is used, so the
+    spawned instrument reaches exactly that tier's limiting magnitude.
+    """
+    powers = {tier.name: tier.min_power for tier in TELESCOPE_TIERS}
+    return spawn_telescope(world, room_id=room_id, power=powers[tier_name])
+
+
+__all__ = ["spawn_telescope", "spawn_tiered_telescope"]

@@ -31,7 +31,39 @@ class SkyChangedEvent(DomainEvent):
     phase: str = "night"
 
 
+class BodyTrackedEvent(DomainEvent):
+    """A character charted a planet or comet tonight."""
+
+    body: str
+    kind: str = "planet"
+    sightings: int = 1
+    instrument: str = "naked eye"
+
+
+class BodySightedEvent(DomainEvent):
+    """A character sighted a planet or comet for the very first time."""
+
+    body: str
+    kind: str = "planet"
+
+
+class CelestialEventBeganEvent(DomainEvent):
+    """A world-wide celestial spectacle (a meteor shower or comet) began overhead.
+
+    Published for any pack that wants to react to the sky — e.g. a festival throwing a
+    meteor-shower spectacle. It carries the storyteller ``incident_id`` the sky opened so a
+    consumer can tie its reaction to the shared incident.
+    """
+
+    celestial_event: str
+    incident_id: str
+    spectacle: str = ""
+
+
 __all__ = [
+    "BodySightedEvent",
+    "BodyTrackedEvent",
+    "CelestialEventBeganEvent",
     "ConstellationIdentifiedEvent",
     "SkyChangedEvent",
     "StargazedEvent",
