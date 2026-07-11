@@ -14,7 +14,7 @@ from bunnyland.core import (
 )
 from bunnyland.core.commands import CommandCost, Lane, build_submitted_command
 from bunnyland.core.handlers import HandlerContext
-from bunnyland.mechanics.environment import WeatherComponent
+from bunnyland.foundation.environment.mechanics import WeatherComponent
 from bunnyland.prompts.context import ComponentPromptContext, PromptPerspective
 
 from bunnyland_starsim import spawn_telescope

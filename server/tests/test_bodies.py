@@ -10,7 +10,7 @@ from bunnyland.core import (
     replace_component,
     spawn_entity,
 )
-from bunnyland.mechanics.environment import WeatherComponent
+from bunnyland.foundation.environment.mechanics import WeatherComponent
 
 from bunnyland_starsim.bodies import (
     CATALOGUE,

@@ -1,22 +1,17 @@
-"""World-generation enrichment: put a telescope where the sky is worth watching.
+"""Declarative telescope generation enrichment."""
 
-When the generator emits a room that reads like a vantage for the sky — an observatory, a
-tower, a hilltop, a rooftop — this hook drops a telescope into it, so generated worlds already
-give a stargazer somewhere to track the planets and comets from. Detection is text-based and
-deterministic; nothing here is random, and the core generator never learns this plugin exists.
-"""
-
-from __future__ import annotations
-
-from bunnyland.core import contents
-from bunnyland.core.ecs import parse_entity_id
-from bunnyland.core.events import RoomGeneratedEvent
-from bunnyland.core.world_actor import WorldActor
+from bunnyland.core import (
+    ContainmentMode,
+    Contains,
+    HoldableComponent,
+    IdentityComponent,
+    PortableComponent,
+)
+from bunnyland.core.generation import GenerationChild, GenerationDelta, GenerationRequest
 
 from .components import TelescopeComponent
-from .prefabs import spawn_tiered_telescope
+from .telescopes import TELESCOPE_TIERS
 
-#: Room text that marks a generated room as a stargazing vantage.
 OBSERVATORY_TERMS = (
     "observatory",
     "planetarium",
@@ -32,40 +27,52 @@ OBSERVATORY_TERMS = (
 )
 
 
-class StarsimWorldgenHook:
-    """Seed a telescope into generated observatories and other stargazing vantages."""
+class StarsimGenerationEnricher:
+    capabilities: tuple[str, ...] = ()
 
-    def subscribe(self, actor: WorldActor) -> None:
-        self._actor = actor
-        actor.bus.subscribe(RoomGeneratedEvent, self._on_room)
+    def applies(self, request: GenerationRequest) -> bool:
+        return request.entity_kind == "room"
 
-    def _on_room(self, event: RoomGeneratedEvent) -> None:
-        entity_id = parse_entity_id(event.entity_id)
-        if entity_id is None or not self._actor.world.has_entity(entity_id):
-            return
-        if not _is_vantage(event):
-            return
-        world = self._actor.world
-        room = world.get_entity(entity_id)
-        # Idempotent: never seed a telescope into the same room twice.
-        for existing_id in contents(room):
-            if world.has_entity(existing_id) and world.get_entity(existing_id).has_component(
-                TelescopeComponent
-            ):
-                return
-        spawn_tiered_telescope(world, "field telescope", room_id=room.id)
-
-
-def _is_vantage(event: RoomGeneratedEvent) -> bool:
-    text = " ".join(
-        (
-            event.room_key,
-            event.biome,
-            event.generation.description,
-            *event.generation.tags,
+    def enrich(self, request: GenerationRequest) -> GenerationDelta:
+        room = next(
+            (
+                item
+                for item in request.context.get("base_components", ())
+                if item.__class__.__name__ == "RoomComponent"
+            ),
+            None,
         )
-    ).casefold()
-    return any(term in text for term in OBSERVATORY_TERMS)
+        text = " ".join(
+            (
+                request.source_key,
+                request.description,
+                str(getattr(room, "biome", "")),
+                *request.tags,
+            )
+        ).casefold()
+        if not any(term in text for term in OBSERVATORY_TERMS):
+            return GenerationDelta()
+        power = next(tier.min_power for tier in TELESCOPE_TIERS if tier.name == "field telescope")
+        return GenerationDelta(
+            children=(
+                GenerationChild(
+                    request=GenerationRequest(
+                        entity_kind="item",
+                        description="telescope",
+                        source_seed=request.source_seed,
+                        source_key=f"{request.source_key}:telescope",
+                        tags=("starsim",),
+                    ),
+                    parent_edge=Contains(mode=ContainmentMode.ROOM_CONTENT),
+                    components=(
+                        IdentityComponent(name="telescope", kind="item", tags=("starsim",)),
+                        PortableComponent(),
+                        HoldableComponent(slot="hand"),
+                        TelescopeComponent(power=power),
+                    ),
+                ),
+            )
+        )
 
 
-__all__ = ["OBSERVATORY_TERMS", "StarsimWorldgenHook"]
+__all__ = ["OBSERVATORY_TERMS", "StarsimGenerationEnricher"]

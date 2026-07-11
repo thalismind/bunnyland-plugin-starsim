@@ -14,7 +14,7 @@ from bunnyland.core import (
 )
 from bunnyland.core.commands import CommandCost, Lane, build_submitted_command
 from bunnyland.core.handlers import HandlerContext
-from bunnyland.mechanics.environment import WeatherComponent
+from bunnyland.foundation.environment.mechanics import WeatherComponent
 
 from bunnyland_starsim import WishLogComponent, celestial_event_for
 from bunnyland_starsim.celestial import (
@@ -44,9 +44,7 @@ def _world(*, day=14, indoor=False, seconds=None, condition="clear"):
     clock = list(actor.world.query().with_all([WorldClockComponent]).execute_entities())[0]
     replace_component(
         clock,
-        WorldClockComponent(
-            game_time_seconds=seconds if seconds is not None else _night_of(day)
-        ),
+        WorldClockComponent(game_time_seconds=seconds if seconds is not None else _night_of(day)),
     )
     clock.add_component(WeatherComponent(condition=condition))
     room = spawn_entity(actor.world, [RoomComponent(title="Field", indoor=indoor)])

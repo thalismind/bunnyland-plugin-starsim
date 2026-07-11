@@ -10,7 +10,7 @@ from bunnyland.core import (
     replace_component,
     spawn_entity,
 )
-from bunnyland.mechanics.environment import WeatherComponent
+from bunnyland.foundation.environment.mechanics import WeatherComponent
 from relics import World
 
 from bunnyland_starsim import (
@@ -47,9 +47,7 @@ def _room(actor, *, indoor=False):
 
 
 def _character(actor, room):
-    character = spawn_entity(
-        actor.world, [IdentityComponent(name="Vin", kind="character")]
-    )
+    character = spawn_entity(actor.world, [IdentityComponent(name="Vin", kind="character")])
     room.add_relationship(Contains(mode=ContainmentMode.ROOM_CONTENT), character.id)
     return character
 

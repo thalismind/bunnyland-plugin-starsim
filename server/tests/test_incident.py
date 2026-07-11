@@ -6,7 +6,7 @@ from bunnyland.core import (
     replace_component,
     spawn_entity,
 )
-from bunnyland.mechanics.storyteller import (
+from bunnyland.foundation.storyteller.mechanics import (
     IncidentComponent,
     IncidentResolvedEvent,
     IncidentStartedEvent,

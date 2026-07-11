@@ -15,7 +15,7 @@ from bunnyland.core import (
 )
 from bunnyland.core.commands import CommandCost, Lane, build_submitted_command
 from bunnyland.core.handlers import HandlerContext
-from bunnyland.mechanics.environment import WeatherComponent
+from bunnyland.foundation.environment.mechanics import WeatherComponent
 
 from bunnyland_starsim import ConstellationLogComponent, spawn_telescope
 from bunnyland_starsim.events import ConstellationIdentifiedEvent, StargazedEvent
@@ -175,7 +175,8 @@ def test_rejects_unknown_constellation():
 def test_rejects_out_of_season_constellation():
     actor, _room, character = _world()  # spring night
     result = StargazeHandler().execute(
-        _ctx(actor), _cmd(character.id, {"constellation": "the Kiln"})  # summer figure
+        _ctx(actor),
+        _cmd(character.id, {"constellation": "the Kiln"}),  # summer figure
     )
     assert not result.ok
     assert result.reason == "that constellation is not visible tonight"

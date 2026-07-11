@@ -16,7 +16,7 @@ from __future__ import annotations
 from bunnyland.core import RoomComponent, WorldClockComponent
 from bunnyland.core.ecs import replace_component
 from bunnyland.core.events import DomainEvent, EventVisibility, event_base
-from bunnyland.mechanics.environment import (
+from bunnyland.foundation.environment.mechanics import (
     WeatherComponent,
     time_of_day,
     weather_for,

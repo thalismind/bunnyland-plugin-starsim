@@ -21,7 +21,7 @@ from bunnyland.core.components import AffectDelta
 from bunnyland.core.ecs import replace_component
 from bunnyland.core.events import EventVisibility
 from bunnyland.core.handlers import HandlerContext, HandlerResult, ok, rejected, require_character
-from bunnyland.mechanics.environment import DAYS_PER_SEASON, SEASONS
+from bunnyland.foundation.environment.mechanics import DAYS_PER_SEASON, SEASONS
 
 from .affect import lift_mood
 from .components import WishLogComponent

@@ -3,7 +3,7 @@
 The sky's celestial events are calendar-driven (see :mod:`~bunnyland_starsim.celestial`), but a
 comet or meteor shower is also something *everyone experiences at once* — exactly what the core
 storyteller layer exists to pace. This consequence mirrors the overhead event onto a core
-:class:`~bunnyland.mechanics.storyteller.IncidentComponent` entity: it **opens** an incident
+Foundation Storyteller ``IncidentComponent`` entity: it **opens** an incident
 when a comet or shower begins and **resolves** it when the sky goes quiet, so the celestial
 event shows up on the same world-incident surface as every other pack's incidents.
 
@@ -23,7 +23,7 @@ from dataclasses import replace
 from bunnyland.core import IdentityComponent, spawn_entity
 from bunnyland.core.ecs import replace_component
 from bunnyland.core.events import DomainEvent, EventVisibility, event_base
-from bunnyland.mechanics.storyteller import (
+from bunnyland.foundation.storyteller.mechanics import (
     IncidentComponent,
     IncidentResolvedEvent,
     IncidentStartedEvent,

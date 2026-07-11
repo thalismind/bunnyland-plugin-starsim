@@ -20,7 +20,7 @@ from .components import (
     WishLogComponent,
 )
 from .constellations import constellation_fragments
-from .enrichment import StarsimWorldgenHook
+from .enrichment import StarsimGenerationEnricher
 from .events import (
     BodySightedEvent,
     BodyTrackedEvent,
@@ -71,9 +71,7 @@ def plugin() -> Plugin:
         ),
         commands=CommandContribution(
             action_handlers=(
-                STARGAZE_ACTION_HANDLERS
-                + CELESTIAL_ACTION_HANDLERS
-                + TRACK_ACTION_HANDLERS
+                STARGAZE_ACTION_HANDLERS + CELESTIAL_ACTION_HANDLERS + TRACK_ACTION_HANDLERS
             ),
             action_definitions=(
                 STARGAZE_ACTION_DEFINITIONS
@@ -102,7 +100,7 @@ def plugin() -> Plugin:
                 tracking_fragments,
                 star_compass_fragments,
             ),
-            worldgen_hooks=(StarsimWorldgenHook,),
+            generation_enrichers=(StarsimGenerationEnricher(),),
         ),
     )
 

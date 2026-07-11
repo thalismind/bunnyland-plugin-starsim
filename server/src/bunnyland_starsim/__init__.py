@@ -57,7 +57,7 @@ from .constellations import (
     is_known_constellation,
     record_identified,
 )
-from .enrichment import StarsimWorldgenHook
+from .enrichment import StarsimGenerationEnricher
 from .events import (
     BodySightedEvent,
     BodyTrackedEvent,
@@ -129,7 +129,7 @@ __all__ = [
     "SkyComponent",
     "StargazeHandler",
     "StargazedEvent",
-    "StarsimWorldgenHook",
+    "StarsimGenerationEnricher",
     "TelescopeComponent",
     "TrackBodyHandler",
     "TracksBody",
