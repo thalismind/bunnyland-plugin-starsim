@@ -14,8 +14,8 @@ room -> cannot see the sky -> invalid argument -> apply.
 from __future__ import annotations
 
 from bunnyland.core import RoomComponent, contents
-from bunnyland.core.actions import ActionArgument, ActionDefinition
-from bunnyland.core.commands import CommandCost, Lane, SubmittedCommand
+from bunnyland.core.actions import ActionArgument, ActionDefinition, ActionEffort, effort_cost
+from bunnyland.core.commands import Lane, SubmittedCommand
 from bunnyland.core.components import AffectDelta
 from bunnyland.core.events import EventVisibility
 from bunnyland.core.handlers import HandlerContext, HandlerResult, ok, rejected, require_character
@@ -140,8 +140,8 @@ STARGAZE_DEF = ActionDefinition(
     command_type="stargaze",
     title="Stargaze",
     description="Look up at a clear night sky and, optionally, chart a constellation.",
-    lane=Lane.WORLD,
-    cost=CommandCost(action=1),
+    lane=Lane.FOCUS,
+    cost=effort_cost(focus=ActionEffort.ROUTINE),
     arguments={
         "constellation": ActionArgument(
             title="Constellation",

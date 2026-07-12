@@ -15,8 +15,8 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from bunnyland.core.actions import ActionDefinition
-from bunnyland.core.commands import CommandCost, Lane, SubmittedCommand
+from bunnyland.core.actions import ActionDefinition, ActionEffort, effort_cost
+from bunnyland.core.commands import Lane, SubmittedCommand
 from bunnyland.core.components import AffectDelta
 from bunnyland.core.ecs import replace_component
 from bunnyland.core.events import EventVisibility
@@ -122,7 +122,7 @@ MAKE_A_WISH_DEF = ActionDefinition(
     title="Make a wish",
     description="Wish upon a meteor shower or comet visible from an open, clear night sky.",
     lane=Lane.WORLD,
-    cost=CommandCost(action=1),
+    cost=effort_cost(action=ActionEffort.ROUTINE),
     arguments={},
 )
 

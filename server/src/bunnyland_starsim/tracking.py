@@ -18,8 +18,8 @@ from __future__ import annotations
 from dataclasses import replace
 
 from bunnyland.core import RoomComponent
-from bunnyland.core.actions import ActionArgument, ActionDefinition
-from bunnyland.core.commands import CommandCost, Lane, SubmittedCommand
+from bunnyland.core.actions import ActionArgument, ActionDefinition, ActionEffort, effort_cost
+from bunnyland.core.commands import Lane, SubmittedCommand
 from bunnyland.core.components import AffectDelta
 from bunnyland.core.events import EventVisibility
 from bunnyland.core.handlers import HandlerContext, HandlerResult, ok, rejected, require_character
@@ -201,8 +201,8 @@ TRACK_BODY_DEF = ActionDefinition(
     command_type="track-body",
     title="Track a body",
     description="Chart a planet or comet that is up tonight and within your telescope's reach.",
-    lane=Lane.WORLD,
-    cost=CommandCost(action=1),
+    lane=Lane.FOCUS,
+    cost=effort_cost(focus=ActionEffort.ROUTINE),
     arguments={
         "body": ActionArgument(
             title="Body",
