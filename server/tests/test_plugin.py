@@ -23,6 +23,7 @@ from bunnyland_starsim.events import (
     BodyTrackedEvent,
     CelestialEventBeganEvent,
 )
+from bunnyland_starsim.integration_3d import install_starsim_3d
 from bunnyland_starsim.plugin import CARTOGRAPHYSIM, FESTIVALSIM, PLUGIN_ID, STORYTELLER
 from bunnyland_starsim.plugin import bunnyland_plugins as _plugins
 
@@ -73,9 +74,11 @@ def test_plugin_declares_its_v2_events():
 def test_plugin_recommends_optional_synergy_partners():
     plugin = _plugins()[0]
     recommends = plugin.dependencies.recommends
+    assert plugin.dependencies.integrates_with == ("bunnyland.3d",)
     assert STORYTELLER in recommends
     assert FESTIVALSIM in recommends
     assert CARTOGRAPHYSIM in recommends
+    assert plugin.runtime.integration_factories == (install_starsim_3d,)
 
 
 def test_plugin_declares_worldgen_hook():

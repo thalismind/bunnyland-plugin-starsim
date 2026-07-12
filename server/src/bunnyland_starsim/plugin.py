@@ -31,6 +31,7 @@ from .events import (
     WishMadeEvent,
 )
 from .install import install_starsim
+from .integration_3d import install_starsim_3d
 from .navigation import navigation_fragments
 from .sky import sky_fragments
 from .stargaze import STARGAZE_ACTION_DEFINITIONS, STARGAZE_ACTION_HANDLERS
@@ -58,6 +59,7 @@ def plugin() -> Plugin:
         default_enabled=True,
         dependencies=DependencyContribution(
             recommends=(STORYTELLER, FESTIVALSIM, CARTOGRAPHYSIM),
+            integrates_with=("bunnyland.3d",),
         ),
         ecs=EcsContribution(
             components=(
@@ -90,6 +92,7 @@ def plugin() -> Plugin:
         ),
         runtime=RuntimeContribution(
             service_factories=(install_starsim,),
+            integration_factories=(install_starsim_3d,),
         ),
         content=ContentContribution(
             prompt_fragments=(
