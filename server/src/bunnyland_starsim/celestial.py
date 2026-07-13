@@ -18,12 +18,18 @@ from dataclasses import replace
 from bunnyland.core.actions import ActionDefinition, ActionEffort, effort_cost
 from bunnyland.core.commands import Lane, SubmittedCommand
 from bunnyland.core.components import AffectDelta
-from bunnyland.core.ecs import replace_component
 from bunnyland.core.events import EventVisibility
-from bunnyland.core.handlers import HandlerContext, HandlerResult, ok, rejected, require_character
+from bunnyland.core.handlers import (
+    HandlerContext,
+    HandlerResult,
+    planned,
+    rejected,
+    require_character,
+)
+from bunnyland.core.mutations import MutationPlan, SetComponent
 from bunnyland.foundation.environment.mechanics import DAYS_PER_SEASON, SEASONS
 
-from .affect import lift_mood
+from .affect import mood_operations
 from .components import WishLogComponent
 from .events import WishMadeEvent
 from .spatial import room_of
@@ -89,12 +95,10 @@ class MakeAWishHandler:
             else WishLogComponent()
         )
         updated = replace(log, wishes=log.wishes + 1, last_event=sky.event)
-        if character.has_component(WishLogComponent):
-            replace_component(character, updated)
-        else:
-            character.add_component(updated)
-        lift_mood(ctx.world, character, WISH_MOOD, ctx.epoch)
-        return ok(
+        operations = [SetComponent(character.id, updated)]
+        operations.extend(mood_operations(character, WISH_MOOD, ctx.epoch))
+        return planned(
+            MutationPlan(tuple(operations)),
             WishMadeEvent(
                 **ctx.event_base(
                     visibility=EventVisibility.ROOM,
@@ -102,7 +106,7 @@ class MakeAWishHandler:
                     room_id=str(room.id),
                     celestial_event=sky.event,
                 )
-            )
+            ),
         )
 
 

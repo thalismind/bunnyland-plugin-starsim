@@ -16,6 +16,7 @@ from bunnyland.core.commands import CommandCost, Lane, build_submitted_command
 from bunnyland.core.handlers import HandlerContext
 from bunnyland.foundation.environment.mechanics import WeatherComponent
 from bunnyland.prompts.context import ComponentPromptContext, PromptPerspective
+from conftest import execute_handler
 
 from bunnyland_starsim import spawn_telescope
 from bunnyland_starsim.bodies import ensure_bodies
@@ -69,7 +70,9 @@ def _ctx(actor, epoch=0):
 
 
 def _track(actor, character, body, *, epoch=0):
-    return TrackBodyHandler().execute(_ctx(actor, epoch), _cmd(character.id, {"body": body}))
+    return execute_handler(
+        TrackBodyHandler(), _ctx(actor, epoch), _cmd(character.id, {"body": body})
+    )
 
 
 # -- happy paths ------------------------------------------------------------------------
@@ -92,7 +95,9 @@ def test_track_a_bright_planet_naked_eye():
 
 def test_track_lifts_mood():
     actor, _room, character = _world()
-    TrackBodyHandler().execute(_ctx(actor), _cmd(character.id, {"body": "the Red Wanderer"}))
+    execute_handler(
+        TrackBodyHandler(), _ctx(actor), _cmd(character.id, {"body": "the Red Wanderer"})
+    )
     thoughts = list(actor.world.query().with_all([ThoughtComponent]).execute_entities())
     assert thoughts
     assert thoughts[0].get_component(ThoughtComponent).affect_delta.curiosity > 0
@@ -101,9 +106,9 @@ def test_track_lifts_mood():
 def test_repeat_sighting_increments_without_a_new_sighted_event():
     actor, _room, character = _world()
     handler = TrackBodyHandler()
-    handler.execute(_ctx(actor, epoch=0), _cmd(character.id, {"body": "the Red Wanderer"}))
-    second = handler.execute(
-        _ctx(actor, epoch=10), _cmd(character.id, {"body": "the Red Wanderer"})
+    execute_handler(handler, _ctx(actor, epoch=0), _cmd(character.id, {"body": "the Red Wanderer"}))
+    second = execute_handler(
+        handler, _ctx(actor, epoch=10), _cmd(character.id, {"body": "the Red Wanderer"})
     )
     assert second.ok
     tracked = next(e for e in second.events if isinstance(e, BodyTrackedEvent))
@@ -118,13 +123,13 @@ def test_a_telescope_reaches_a_faint_comet_and_deepens_wonder():
     _hold(gazer, spawn_telescope(scope_actor.world, power=3.0))  # great observatory, mag 12
 
     # The faint Pale Wayfarer (mag 10.5) is out of naked-eye reach...
-    naked = TrackBodyHandler().execute(
-        _ctx(plain_actor), _cmd(plain.id, {"body": "the Pale Wayfarer"})
+    naked = execute_handler(
+        TrackBodyHandler(), _ctx(plain_actor), _cmd(plain.id, {"body": "the Pale Wayfarer"})
     )
     assert not naked.ok
     # ...but the great observatory brings it in.
-    scoped = TrackBodyHandler().execute(
-        _ctx(scope_actor), _cmd(gazer.id, {"body": "the Pale Wayfarer"})
+    scoped = execute_handler(
+        TrackBodyHandler(), _ctx(scope_actor), _cmd(gazer.id, {"body": "the Pale Wayfarer"})
     )
     assert scoped.ok
     tracked = next(e for e in scoped.events if isinstance(e, BodyTrackedEvent))
@@ -134,8 +139,10 @@ def test_a_telescope_reaches_a_faint_comet_and_deepens_wonder():
 def test_tracking_two_different_bodies_keeps_two_edges():
     actor, _room, character = _world()  # day 1: both bright planets are up
     handler = TrackBodyHandler()
-    handler.execute(_ctx(actor), _cmd(character.id, {"body": "the Red Wanderer"}))
-    second = handler.execute(_ctx(actor), _cmd(character.id, {"body": "the Morning Lantern"}))
+    execute_handler(handler, _ctx(actor), _cmd(character.id, {"body": "the Red Wanderer"}))
+    second = execute_handler(
+        handler, _ctx(actor), _cmd(character.id, {"body": "the Morning Lantern"})
+    )
     assert second.ok
     assert any(isinstance(e, BodySightedEvent) for e in second.events)  # a fresh sighting
     assert len(list(character.get_relationships(TracksBody))) == 2
@@ -167,7 +174,9 @@ def test_record_tracking_advances_the_edge_in_place():
 
 def test_rejects_invalid_character_id():
     actor, _room, _character = _world()
-    result = TrackBodyHandler().execute(_ctx(actor), _cmd("???", {"body": "the Red Wanderer"}))
+    result = execute_handler(
+        TrackBodyHandler(), _ctx(actor), _cmd("???", {"body": "the Red Wanderer"})
+    )
     assert not result.ok
     assert result.reason == "invalid character id"
 
@@ -177,7 +186,9 @@ def test_rejects_character_with_no_room():
     drifter = spawn_entity(
         actor.world, [IdentityComponent(name="drifter", kind="character"), CharacterComponent()]
     )
-    result = TrackBodyHandler().execute(_ctx(actor), _cmd(drifter.id, {"body": "the Red Wanderer"}))
+    result = execute_handler(
+        TrackBodyHandler(), _ctx(actor), _cmd(drifter.id, {"body": "the Red Wanderer"})
+    )
     assert not result.ok
     assert result.reason == "you are not in a room"
 
@@ -205,14 +216,16 @@ def test_rejects_under_clouds():
 
 def test_rejects_empty_body_name():
     actor, _room, character = _world()
-    result = TrackBodyHandler().execute(_ctx(actor), _cmd(character.id, {"body": "  "}))
+    result = execute_handler(TrackBodyHandler(), _ctx(actor), _cmd(character.id, {"body": "  "}))
     assert not result.ok
     assert result.reason == "name a planet or comet to track"
 
 
 def test_rejects_unknown_body():
     actor, _room, character = _world()
-    result = TrackBodyHandler().execute(_ctx(actor), _cmd(character.id, {"body": "the Moon Base"}))
+    result = execute_handler(
+        TrackBodyHandler(), _ctx(actor), _cmd(character.id, {"body": "the Moon Base"})
+    )
     assert not result.ok
     assert result.reason == "the sky charts list no such body"
 
@@ -220,8 +233,8 @@ def test_rejects_unknown_body():
 def test_rejects_body_below_the_horizon():
     # Day 6: the Morning Lantern (period 8, window 5) has set.
     actor, _room, character = _world(seconds=(6 - 1) * SECONDS_PER_DAY + NIGHT, condition="clear")
-    result = TrackBodyHandler().execute(
-        _ctx(actor), _cmd(character.id, {"body": "the Morning Lantern"})
+    result = execute_handler(
+        TrackBodyHandler(), _ctx(actor), _cmd(character.id, {"body": "the Morning Lantern"})
     )
     assert not result.ok
     assert result.reason == "that body is not above the horizon tonight"
@@ -239,7 +252,9 @@ def test_rejects_faint_body_beyond_naked_eye():
 
 def test_tracking_fragment_lists_charted_wanderers():
     actor, _room, character = _world()  # for_entity defaults to a first-person view
-    TrackBodyHandler().execute(_ctx(actor), _cmd(character.id, {"body": "the Red Wanderer"}))
+    execute_handler(
+        TrackBodyHandler(), _ctx(actor), _cmd(character.id, {"body": "the Red Wanderer"})
+    )
     lines = tracking_fragments(actor.world, character)
     assert lines
     assert "the Red Wanderer" in lines[0]
@@ -258,7 +273,9 @@ def test_tracking_fragment_empty_for_no_character():
 
 def test_tracking_fragment_empty_in_third_person(monkeypatch):
     actor, _room, character = _world()
-    TrackBodyHandler().execute(_ctx(actor), _cmd(character.id, {"body": "the Red Wanderer"}))
+    execute_handler(
+        TrackBodyHandler(), _ctx(actor), _cmd(character.id, {"body": "the Red Wanderer"})
+    )
     onlooker = spawn_entity(
         actor.world, [IdentityComponent(name="Onlooker", kind="character"), CharacterComponent()]
     )
@@ -273,7 +290,9 @@ def test_tracking_fragment_empty_in_third_person(monkeypatch):
 
 def test_tracking_fragment_skips_a_removed_body():
     actor, _room, character = _world()
-    TrackBodyHandler().execute(_ctx(actor), _cmd(character.id, {"body": "the Red Wanderer"}))
+    execute_handler(
+        TrackBodyHandler(), _ctx(actor), _cmd(character.id, {"body": "the Red Wanderer"})
+    )
     # Remove the body entity: its edge lingers but the fragment skips a dead target.
     for _edge, target_id in list(character.get_relationships(TracksBody)):
         actor.world.remove(target_id)

@@ -16,6 +16,7 @@ from bunnyland.core import (
     ThoughtComponent,
     spawn_entity,
 )
+from bunnyland.core.mutations import AddEdge, AddEntity, EntityReference
 from relics import Entity, World
 
 #: How long a stargazing thought lingers before it decays (game seconds).
@@ -53,4 +54,33 @@ def lift_mood(
     return thought
 
 
-__all__ = ["WONDER_TTL_SECONDS", "lift_mood"]
+def mood_operations(
+    character: Entity,
+    delta: AffectDelta,
+    epoch: int,
+    *,
+    label: str = "wonder",
+    text: str = "The night sky is quietly beautiful.",
+):
+    """Build typed operations for a decaying mood thought without mutating the world."""
+    if character is None or not character.has_component(CharacterComponent):
+        return ()
+    thought = EntityReference()
+    return (
+        AddEntity(
+            (
+                ThoughtComponent(
+                    label=label,
+                    text=text,
+                    affect_delta=delta,
+                    created_at_epoch=epoch,
+                    expires_at_epoch=epoch + WONDER_TTL_SECONDS,
+                ),
+            ),
+            reference=thought,
+        ),
+        AddEdge(character.id, thought, HasThought()),
+    )
+
+
+__all__ = ["WONDER_TTL_SECONDS", "lift_mood", "mood_operations"]

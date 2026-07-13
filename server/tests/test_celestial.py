@@ -15,6 +15,7 @@ from bunnyland.core import (
 from bunnyland.core.commands import CommandCost, Lane, build_submitted_command
 from bunnyland.core.handlers import HandlerContext
 from bunnyland.foundation.environment.mechanics import WeatherComponent
+from conftest import execute_handler
 
 from bunnyland_starsim import WishLogComponent, celestial_event_for
 from bunnyland_starsim.celestial import (
@@ -105,7 +106,7 @@ def test_event_lookup_is_deterministic():
 
 def test_wish_during_a_meteor_shower_succeeds():
     actor, _room, character = _world(day=14)
-    result = MakeAWishHandler().execute(_ctx(actor), _cmd(character.id))
+    result = execute_handler(MakeAWishHandler(), _ctx(actor), _cmd(character.id))
     assert result.ok
     assert isinstance(result.events[0], WishMadeEvent)
     assert result.events[0].celestial_event == METEOR_SHOWER
@@ -113,7 +114,7 @@ def test_wish_during_a_meteor_shower_succeeds():
 
 def test_wish_records_the_wish_and_lifts_mood():
     actor, _room, character = _world(day=14)
-    MakeAWishHandler().execute(_ctx(actor), _cmd(character.id))
+    execute_handler(MakeAWishHandler(), _ctx(actor), _cmd(character.id))
     assert character.get_component(WishLogComponent).wishes == 1
     thoughts = list(actor.world.query().with_all([ThoughtComponent]).execute_entities())
     assert len(thoughts) == 1
@@ -123,14 +124,14 @@ def test_wish_records_the_wish_and_lifts_mood():
 def test_repeated_wishes_accumulate():
     actor, _room, character = _world(day=14)
     handler = MakeAWishHandler()
-    handler.execute(_ctx(actor), _cmd(character.id))
-    handler.execute(_ctx(actor), _cmd(character.id))
+    execute_handler(handler, _ctx(actor), _cmd(character.id))
+    execute_handler(handler, _ctx(actor), _cmd(character.id))
     assert character.get_component(WishLogComponent).wishes == 2
 
 
 def test_wish_during_a_comet_succeeds():
     actor, _room, character = _world(day=COMET_DAY_OF_YEAR)
-    result = MakeAWishHandler().execute(_ctx(actor), _cmd(character.id))
+    result = execute_handler(MakeAWishHandler(), _ctx(actor), _cmd(character.id))
     assert result.ok
     assert result.events[0].celestial_event == COMET
 
@@ -140,7 +141,7 @@ def test_wish_during_a_comet_succeeds():
 
 def test_rejects_invalid_character_id():
     actor, _room, _character = _world(day=14)
-    result = MakeAWishHandler().execute(_ctx(actor), _cmd("???"))
+    result = execute_handler(MakeAWishHandler(), _ctx(actor), _cmd("???"))
     assert not result.ok
     assert result.reason == "invalid character id"
 
@@ -152,34 +153,34 @@ def test_rejects_character_with_no_room():
     character = spawn_entity(
         actor.world, [IdentityComponent(name="drifter", kind="character"), CharacterComponent()]
     )
-    result = MakeAWishHandler().execute(_ctx(actor), _cmd(character.id))
+    result = execute_handler(MakeAWishHandler(), _ctx(actor), _cmd(character.id))
     assert not result.ok
     assert result.reason == "you are not in a room"
 
 
 def test_rejects_when_no_event_overhead():
     actor, _room, character = _world(day=1)  # quiet night
-    result = MakeAWishHandler().execute(_ctx(actor), _cmd(character.id))
+    result = execute_handler(MakeAWishHandler(), _ctx(actor), _cmd(character.id))
     assert not result.ok
     assert result.reason == "there is nothing to wish upon right now"
 
 
 def test_rejects_indoors_even_during_a_shower():
     actor, _room, character = _world(day=14, indoor=True)
-    result = MakeAWishHandler().execute(_ctx(actor), _cmd(character.id))
+    result = execute_handler(MakeAWishHandler(), _ctx(actor), _cmd(character.id))
     assert not result.ok
     assert result.reason == "you are indoors; you cannot see the sky"
 
 
 def test_rejects_in_daylight():
     actor, _room, character = _world(seconds=13 * SECONDS_PER_DAY + DAY)  # day 14, noon
-    result = MakeAWishHandler().execute(_ctx(actor), _cmd(character.id))
+    result = execute_handler(MakeAWishHandler(), _ctx(actor), _cmd(character.id))
     assert not result.ok
     assert result.reason == "the stars are not out"
 
 
 def test_rejects_under_clouds():
     actor, _room, character = _world(day=14, condition="overcast")
-    result = MakeAWishHandler().execute(_ctx(actor), _cmd(character.id))
+    result = execute_handler(MakeAWishHandler(), _ctx(actor), _cmd(character.id))
     assert not result.ok
     assert result.reason == "clouds hide the stars"

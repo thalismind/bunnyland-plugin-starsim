@@ -17,6 +17,7 @@ from bunnyland.core.commands import CommandCost, Lane, build_submitted_command
 from bunnyland.core.components import AffectDelta
 from bunnyland.core.handlers import HandlerContext
 from bunnyland.prompts.context import ComponentPromptContext, PromptPerspective
+from conftest import execute_handler
 
 from bunnyland_starsim import (
     ConstellationLogComponent,
@@ -53,14 +54,16 @@ def _clockless_world(command_type):
 
 def test_stargaze_without_a_sky_is_rejected():
     actor, _character, command = _clockless_world("stargaze")
-    result = StargazeHandler().execute(HandlerContext(world=actor.world, epoch=0), command)
+    result = execute_handler(StargazeHandler(), HandlerContext(world=actor.world, epoch=0), command)
     assert not result.ok
     assert result.reason == "there is no sky overhead"
 
 
 def test_make_a_wish_without_a_sky_is_rejected():
     actor, _character, command = _clockless_world("make-a-wish")
-    result = MakeAWishHandler().execute(HandlerContext(world=actor.world, epoch=0), command)
+    result = execute_handler(
+        MakeAWishHandler(), HandlerContext(world=actor.world, epoch=0), command
+    )
     assert not result.ok
     assert result.reason == "there is no sky overhead"
 
@@ -85,7 +88,7 @@ def test_stargaze_skips_a_dropped_telescope_item():
         lane=Lane.WORLD,
         payload={},
     )
-    result = StargazeHandler().execute(HandlerContext(world=actor.world, epoch=0), command)
+    result = execute_handler(StargazeHandler(), HandlerContext(world=actor.world, epoch=0), command)
     assert result.ok  # the dead item is simply ignored
 
 
@@ -116,7 +119,7 @@ def test_stargaze_picks_the_strongest_of_mixed_inventory():
         lane=Lane.WORLD,
         payload={},
     )
-    result = StargazeHandler().execute(HandlerContext(world=actor.world, epoch=0), command)
+    result = execute_handler(StargazeHandler(), HandlerContext(world=actor.world, epoch=0), command)
     assert result.ok
 
 

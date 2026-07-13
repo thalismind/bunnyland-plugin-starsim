@@ -17,17 +17,29 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from bunnyland.core import RoomComponent
+from bunnyland.core import IdentityComponent, RoomComponent
 from bunnyland.core.actions import ActionArgument, ActionDefinition, ActionEffort, effort_cost
 from bunnyland.core.commands import Lane, SubmittedCommand
 from bunnyland.core.components import AffectDelta
 from bunnyland.core.events import EventVisibility
-from bunnyland.core.handlers import HandlerContext, HandlerResult, ok, rejected, require_character
+from bunnyland.core.handlers import (
+    HandlerContext,
+    HandlerResult,
+    planned,
+    rejected,
+    require_character,
+)
+from bunnyland.core.mutations import (
+    AddEdge,
+    AddEntity,
+    EntityReference,
+    MutationPlan,
+)
 from pydantic.dataclasses import dataclass
 from relics import Edge, Entity, World
 
-from .affect import lift_mood
-from .bodies import CelestialBodyComponent, body_up, ensure_bodies, get_body, is_known_body
+from .affect import mood_operations
+from .bodies import CelestialBodyComponent, body_up, get_body, is_known_body
 from .events import BodySightedEvent, BodyTrackedEvent
 from .sky import derive_sky, stars_visible_from_room
 from .spatial import room_of
@@ -130,21 +142,55 @@ class TrackBodyHandler:
         if body.magnitude > reach_magnitude(telescope):
             return rejected("it is too faint to make out; you need a stronger telescope")
 
-        body_entity = ensure_bodies(ctx.world)[name]
-        sightings, is_new = record_tracking(character, body_entity, ctx.epoch)
+        body_entity = next(
+            (
+                entity
+                for entity in ctx.world.query()
+                .with_all([CelestialBodyComponent])
+                .execute_entities()
+                if entity.get_component(CelestialBodyComponent).name == name
+            ),
+            None,
+        )
+        body_target = body_entity.id if body_entity is not None else EntityReference()
+        current = _existing_edge(character, body_entity.id) if body_entity is not None else None
+        is_new = current is None
+        tracking = (
+            TracksBody(sightings=1, first_epoch=ctx.epoch, last_epoch=ctx.epoch)
+            if current is None
+            else replace(current, sightings=current.sightings + 1, last_epoch=ctx.epoch)
+        )
+        sightings = tracking.sightings
+        operations = []
+        if body_entity is None:
+            operations.append(
+                AddEntity(
+                    (
+                        IdentityComponent(name=body.name, kind="celestial-body", tags=("starsim",)),
+                        CelestialBodyComponent(
+                            name=body.name,
+                            kind=body.kind,
+                            magnitude=body.magnitude,
+                        ),
+                    ),
+                    reference=body_target,
+                )
+            )
+        operations.append(AddEdge(character.id, body_target, tracking))
 
         mood = TRACK_MOOD
         if is_new:
             mood = _sum(mood, FIRST_SIGHTING_MOOD)
         if telescope is not None:
             mood = _scaled(mood, TELESCOPE_BONUS * telescope.power)
-        lift_mood(
-            ctx.world,
-            character,
-            mood,
-            ctx.epoch,
-            label="wonder",
-            text=f"You have the {name} in your sights.",
+        operations.extend(
+            mood_operations(
+                character,
+                mood,
+                ctx.epoch,
+                label="wonder",
+                text=f"You have the {name} in your sights.",
+            )
         )
 
         events = [
@@ -172,7 +218,7 @@ class TrackBodyHandler:
                     )
                 )
             )
-        return ok(*events)
+        return planned(MutationPlan(tuple(operations)), *events)
 
 
 def tracking_fragments(world: World, character: Entity) -> list[str]:

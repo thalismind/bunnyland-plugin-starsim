@@ -18,12 +18,19 @@ from bunnyland.core.actions import ActionArgument, ActionDefinition, ActionEffor
 from bunnyland.core.commands import Lane, SubmittedCommand
 from bunnyland.core.components import AffectDelta
 from bunnyland.core.events import EventVisibility
-from bunnyland.core.handlers import HandlerContext, HandlerResult, ok, rejected, require_character
+from bunnyland.core.handlers import (
+    HandlerContext,
+    HandlerResult,
+    planned,
+    rejected,
+    require_character,
+)
+from bunnyland.core.mutations import MutationPlan, SetComponent
 from relics import Entity, World
 
-from .affect import lift_mood
-from .components import TelescopeComponent
-from .constellations import is_known_constellation, record_identified
+from .affect import mood_operations
+from .components import ConstellationLogComponent, TelescopeComponent
+from .constellations import is_known_constellation
 from .events import ConstellationIdentifiedEvent, StargazedEvent
 from .sky import derive_sky, stars_visible_from_room
 from .spatial import room_of
@@ -101,7 +108,12 @@ class StargazeHandler:
                 return rejected("that is not a constellation you know of")
             if requested not in sky.constellations:
                 return rejected("that constellation is not visible tonight")
-            identified_new = record_identified(character, requested)
+            log = (
+                character.get_component(ConstellationLogComponent)
+                if character.has_component(ConstellationLogComponent)
+                else ConstellationLogComponent()
+            )
+            identified_new = requested not in log.identified
 
         telescope = _held_telescope(ctx.world, character)
         mood = GAZE_MOOD
@@ -109,7 +121,17 @@ class StargazeHandler:
             mood = _sum(mood, DISCOVERY_MOOD)
         if telescope is not None:
             mood = _scaled(mood, TELESCOPE_BONUS * telescope.power)
-        lift_mood(ctx.world, character, mood, ctx.epoch)
+        operations = []
+        if identified_new:
+            operations.append(
+                SetComponent(
+                    character.id,
+                    ConstellationLogComponent(
+                        identified=tuple(sorted({*log.identified, requested}))
+                    ),
+                )
+            )
+        operations.extend(mood_operations(character, mood, ctx.epoch))
 
         events = [
             StargazedEvent(
@@ -133,7 +155,7 @@ class StargazeHandler:
                     )
                 )
             )
-        return ok(*events)
+        return planned(MutationPlan(tuple(operations)), *events)
 
 
 STARGAZE_DEF = ActionDefinition(
