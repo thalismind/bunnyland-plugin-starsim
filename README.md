@@ -43,6 +43,8 @@ The plugin exposes `bunnyland_starsim.bunnyland_plugins()` and contributes:
 - `stargaze` and `make-a-wish` - verbs for the character (human or AI), emitting
   `StargazedEvent`, `ConstellationIdentifiedEvent`, and `WishMadeEvent`.
 - `spawn_telescope` - a spawn factory for the optional telescope item.
+- Optional Bunnyland 3D integration models telescopes and projects a starfield skybox only
+  in outdoor rooms where the calendar and weather make the stars visible.
 
 No worldgen hook is required: the sky is global.
 

@@ -1,6 +1,7 @@
 """Optional, lazily imported 3D appearance for telescopes."""
 
 from .components import TelescopeComponent
+from .sky import derive_sky, stars_visible_from_room
 
 
 def install_starsim_3d(actor, context) -> None:
@@ -13,13 +14,53 @@ def install_starsim_3d(actor, context) -> None:
         ModelTransform,
         PrimitivePart3D,
         ProceduralModelSource,
+        RoomSkyboxRule,
+        Skybox3D,
         VisualMaterial3D,
         register_entity_visuals,
         register_models,
+        register_skybox_rules,
+        register_skyboxes,
     )
 
     owner = "bunnyland.starsim"
     model_key = f"{owner}/telescope"
+    register_skyboxes(
+        actor,
+        owner,
+        (
+            Skybox3D(
+                f"{owner}/clear-night",
+                zenith_color="#030817",
+                sky_color="#09152f",
+                horizon_color="#172544",
+                horizon_mix=0.78,
+                sun_color="#dbe8ff",
+                sun_x=0.72,
+                sun_y=0.22,
+                sun_size=0.018,
+                sun_opacity=0.82,
+                cloud_color="#9eb2cc",
+                cloud_opacity=0.05,
+                cloud_count=4,
+                star_color="#edf4ff",
+                star_opacity=0.9,
+                star_count=220,
+            ),
+        ),
+    )
+    register_skybox_rules(
+        actor,
+        owner,
+        (
+            RoomSkyboxRule(
+                f"{owner}/visible-night-sky",
+                f"{owner}/clear-night",
+                lambda world, room: stars_visible_from_room(derive_sky(world), room),
+                priority=20,
+            ),
+        ),
+    )
     metal = VisualMaterial3D(color="#71839b", metallic=0.7, roughness=0.3)
     register_models(
         actor,
