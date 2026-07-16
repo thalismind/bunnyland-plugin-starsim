@@ -28,19 +28,28 @@ jobs:
           path: bunnyland-server
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Checkout Bunnyland 3D integration
+        uses: actions/checkout@v6
+        with:
+          repository: thalismind/bunnyland-3d
+          ref: main
+          path: bunnyland-3d
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Install uv
         uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
 
       - name: Ruff (lint)
         working-directory: plugin/server
-        run: uv run --project ../../bunnyland-server ruff check --output-format=github src tests
+        run: uv run --project ../../bunnyland-server --with "trimesh>=4.4" --with "fastapi>=0.110" ruff check --output-format=github src tests
 
       - name: Pytest (test report + coverage)
         working-directory: plugin/server
         run: |
           set -o pipefail
           mkdir -p reports
-          uv run --project ../../bunnyland-server -m pytest \
+          PYTHONPATH="src:../../bunnyland-server/src:../../bunnyland-3d/server/src" \
+          uv run --project ../../bunnyland-server --with "trimesh>=4.4" --with "fastapi>=0.110" -m pytest \
             --junit-xml=reports/junit.xml \
             --cov=src --cov-branch --cov-fail-under=95 \
             --cov-report=xml:reports/coverage.xml --cov-report=term \
