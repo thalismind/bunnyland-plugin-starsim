@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from importlib.util import find_spec
+
+import pytest
 from bunnyland.core import RoomComponent, WorldActor, WorldClockComponent, spawn_entity
 from bunnyland.core.ecs import replace_component
 from bunnyland.foundation.environment.mechanics import WeatherComponent
@@ -7,6 +10,11 @@ from bunnyland.foundation.media.plugin import plugin as media_plugin
 from bunnyland.plugins import apply_plugins
 
 from bunnyland_starsim.plugin import plugin as starsim_plugin
+
+pytestmark = pytest.mark.skipif(
+    find_spec("bunnyland_3d") is None,
+    reason="published base server image has no 3D addon",
+)
 
 
 def _actor(tmp_path, monkeypatch):
