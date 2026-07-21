@@ -3,11 +3,11 @@ name = "bunnyland-starsim"
 version = "0.2.0"
 description = "Out-of-tree Bunnyland plugin: a stargazing and astronomy pack — a night sky that turns with the calendar, constellations to learn, celestial events to wish on, and navigation by the stars."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.15"
 dependencies = [
-    "bunnyland",
+    "bunnyland>=1.0.0rc2,<2",
     "pydantic>=2.0",
-    "relics",
+    "relics-ecs>=0.1.1,<0.2",
 ]
 
 [project.optional-dependencies]
